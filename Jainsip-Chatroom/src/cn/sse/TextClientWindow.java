@@ -8,6 +8,8 @@ import java.awt.BorderLayout;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.awt.font.*;
 
 import javax.swing.*;
@@ -27,13 +29,14 @@ class MyLayout extends JFrame {
 
 	// Chat Panel
 	JTextArea chatContentDisplay = new JTextArea("");
+	JScrollPane chatContentScroll = new JScrollPane(chatContentDisplay);
 	JTextArea onlineListDisplay = new JTextArea("选择收信人（若不选则表示全体消息）：");
 	JButton btnReset = new JButton("重置");
 	JPanel onlineListPanel = new JPanel();
 	JPanel chatPanel = new JPanel();
 
 	// Send Panel
-	JTextField sendContentDisplay = new JTextField("jijigou");
+	JTextField sendContentDisplay = new JTextField("");
 	JButton btnSend = new JButton("发送");
 	JPanel sendPanel = new JPanel();
 
@@ -70,7 +73,7 @@ class MyLayout extends JFrame {
 		}
 		onlineListPanel.add(btnReset);
 		
-		chatPanel.add(chatContentDisplay, BorderLayout.CENTER);
+		chatPanel.add(chatContentScroll, BorderLayout.CENTER);
 		chatPanel.add(onlineListPanel, BorderLayout.SOUTH);
 		this.add(chatPanel, BorderLayout.CENTER);
 
@@ -98,6 +101,39 @@ public class TextClientWindow implements SipMessageListener {
 	private static String SomeNotice = "SOM";
 	private static String P2pNotice = "P2P";
 	
+	class CheckOnlineThread implements Runnable{
+
+		@Override
+		public void run() {
+			// TODO Auto-generated method stub
+			
+		}
+		
+	}
+	
+	class EnterListener implements KeyListener{
+
+		@Override
+		public void keyPressed(KeyEvent arg0) {
+			// TODO Auto-generated method stub
+			if(arg0.getKeyCode() == KeyEvent.VK_ENTER && !layout.sendContentDisplay.getText().equals("")) {
+				sendMessage();
+			}
+		}
+
+		@Override
+		public void keyReleased(KeyEvent e) {
+			// TODO Auto-generated method stub
+			
+		}
+
+		@Override
+		public void keyTyped(KeyEvent e) {
+			// TODO Auto-generated method stub
+			
+		}
+		
+	}
 	
 	class ButtonListener implements ActionListener{
 
@@ -106,29 +142,15 @@ public class TextClientWindow implements SipMessageListener {
 			// TODO Auto-generated method stub
 			String name = e.getActionCommand();
 			if(name.equals("重置")) {
-				
-			}
-			else if(name.equals("发送")) {
-				String toSend = "";
+				//取消勾选
 				for(int i=0;i<layout.onlineListCheck.size();i++) {
-					if(layout.onlineListCheck.get(i).isSelected()) {
-						toSend += layout.onlineListCheck.get(i).getText() + "&";
-					}
-					toSend += layout.sendContentDisplay.getText();
-					layout.sendContentDisplay.setText("");
-					try {
-						sipLayer.sendMessage(serverAddress, toSend);
-					} catch (ParseException e1) {
-						// TODO Auto-generated catch block
-						e1.printStackTrace();
-					} catch (InvalidArgumentException e1) {
-						// TODO Auto-generated catch block
-						e1.printStackTrace();
-					} catch (SipException e1) {
-						// TODO Auto-generated catch block
-						e1.printStackTrace();
+					if(layout.onlineListCheck.get(i).isSelected() == true) {
+						layout.onlineListCheck.get(i).doClick();
 					}
 				}
+			}
+			else if(name.equals("发送")) {
+				sendMessage();
 			}
 			else {
 				
@@ -136,12 +158,39 @@ public class TextClientWindow implements SipMessageListener {
 		}
 		
 	}
-
+	
+	void sendMessage() {
+		String toSend = sipLayer.getUsername() + "&";
+		for(int i=0;i<layout.onlineListCheck.size();i++) {
+			if(layout.onlineListCheck.get(i).isSelected()) {
+				toSend += layout.onlineListCheck.get(i).getText() + "&";
+			}
+		}
+		toSend += layout.sendContentDisplay.getText();
+		layout.sendContentDisplay.setText("");
+		try {
+			sipLayer.sendMessage(serverAddress, toSend);
+		} catch (ParseException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		} catch (InvalidArgumentException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		} catch (SipException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+	}
+	
 	public TextClientWindow(SipLayerFacade sipLayer) {
 		super();
 		layout = new MyLayout();
 		clientList = new HashSet<String>();
 		toSendList = new HashSet<String>();
+		
+		layout.sendContentDisplay.addKeyListener(this.new EnterListener());
+		layout.btnReset.addActionListener(this.new ButtonListener());
+		layout.btnSend.addActionListener(this.new ButtonListener());
 	}
 
 	public static void main(String[] args) throws Exception {
@@ -165,47 +214,6 @@ public class TextClientWindow implements SipMessageListener {
 		TextClientWindow window = new TextClientWindow(sipLayer);
 		keyboard = new BufferedReader(new InputStreamReader(System.in, "UTF-8"));
 		
-		//发送键添加listener
-		layout.btnSend.addActionListener(new ActionListener() {
-
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				// TODO Auto-generated method stub
-				String name = e.getActionCommand();
-				if(name.equals("重置")) {
-					
-				}
-				else if(name.equals("发送")) {
-					//客户端向服务器发送：“作者地址&地址1&地址2&消息内容”
-					String toSend = sipLayer.getUsername() + "&";
-					for(int i=0;i<layout.onlineListCheck.size();i++) {
-						if(layout.onlineListCheck.get(i).isSelected()) {
-							toSend += layout.onlineListCheck.get(i).getText() + "&";
-						}
-						
-					}
-					toSend += layout.sendContentDisplay.getText();
-					layout.sendContentDisplay.setText("");
-					System.out.println("toSend: " + toSend);
-					try {
-						sipLayer.sendMessage(serverAddress, toSend);
-					} catch (ParseException e1) {
-						// TODO Auto-generated catch block
-						e1.printStackTrace();
-					} catch (InvalidArgumentException e1) {
-						// TODO Auto-generated catch block
-						e1.printStackTrace();
-					} catch (SipException e1) {
-						// TODO Auto-generated catch block
-						e1.printStackTrace();
-					}
-				}
-				else {
-					
-				}
-			}
-			
-		});
 		sipLayer.addSipMessageListener(window);
 		
 		SwingUtilities.invokeLater(new Runnable() {
@@ -253,6 +261,9 @@ public class TextClientWindow implements SipMessageListener {
 							layout.onlineListPanel.add(jtemp);
 						}		
 						layout.onlineListPanel.add(layout.btnReset);
+						layout.toFront();
+						layout.revalidate();
+						layout.repaint();
 					}
 
 				});

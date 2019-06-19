@@ -35,6 +35,22 @@ public class Server implements SipMessageListener{
 		return temp;
 	}
 	
+	void copyToAll(String s) {
+		try {
+			for(int j=0;j<clientList.size();j++) {
+				sipLayer.sendMessage(clientList.get(j), s);
+			}
+		} catch (ParseException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (InvalidArgumentException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (SipException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
 	@Override
 	public void processReceivedMessage(String sender, String message) {
 		// TODO Auto-generated method stub
@@ -65,20 +81,7 @@ public class Server implements SipMessageListener{
 				i++;
 			}
 			onlineListString += clientList.get(clientList.size()-1);
-			for(int j=0;j<clientList.size();j++) {
-				try {
-					sipLayer.sendMessage(clientList.get(j), onlineListString);
-				} catch (ParseException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				} catch (InvalidArgumentException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				} catch (SipException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-			}
+			copyToAll(onlineListString);
 		}
 		
 		//若非新成员，则按照格式转发消息
@@ -86,23 +89,30 @@ public class Server implements SipMessageListener{
 		//先默认为全体
 		else {
 			String[] list = message.split("&");
+			//若list长度为2，说明是群发 
 			String toSend = AllNotice + "&" + list[0] + "&" + list[list.length-1];
-			
-			//客户端向服务器发送：“作者地址&地址1&地址2&消息内容”，所以目标地址在1到length-2的下标区间
-			for(int i=1;i<list.length-1;i++) {
-				try {
-					sipLayer.sendMessage(list[i], toSend);
-				} catch (ParseException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				} catch (InvalidArgumentException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				} catch (SipException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+			if(list.length == 2) {
+				copyToAll(toSend);
+				return;
+			}
+			else {
+				//客户端向服务器发送：“作者地址&地址1&地址2&消息内容”，所以目标地址在1到length-2的下标区间
+				for(int i=1;i<list.length-1;i++) {
+					try {
+						sipLayer.sendMessage(list[i], toSend);
+					} catch (ParseException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					} catch (InvalidArgumentException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					} catch (SipException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
 				}
 			}
+			
 		}
 		
 		
