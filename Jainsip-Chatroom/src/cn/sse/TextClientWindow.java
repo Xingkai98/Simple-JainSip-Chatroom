@@ -96,10 +96,10 @@ public class TextClientWindow implements SipMessageListener {
 	private static MyLayout layout;
 	private static String grantPermission = "********";
 	private static String updateOnlineList = "&&&&&&&&";
-	private static String updateNotice = "UPD";
-	private static String AllNotice = "ALL";
-	private static String SomeNotice = "SOM";
-	private static String P2pNotice = "P2P";
+	private static String UPDATE_NOTICE = "UPD";
+	private static String ALL_NOTICE = "ALL";
+	private static String SOME_NOTICE = "SOM";
+	private static String P2P_NOTICE = "P2P";
 	
 	class CheckOnlineThread implements Runnable{
 
@@ -245,7 +245,7 @@ public class TextClientWindow implements SipMessageListener {
 		//System.out.println(message);
 		if(getSipAddress(sender).equals("Server@127.0.0.1:8080")) {
 			final String[] messageList = message.split("&");
-			if(messageList[0].equals(updateNotice)) {
+			if(messageList[0].equals(UPDATE_NOTICE)) {
 				SwingUtilities.invokeLater(new Runnable() {
 
 					@Override
@@ -268,21 +268,28 @@ public class TextClientWindow implements SipMessageListener {
 
 				});
 			}
-			else if(messageList[0].equals(AllNotice)) {
+			else if(messageList[0].equals(ALL_NOTICE)) {
 				SwingUtilities.invokeLater(new Runnable() {
 
 					@Override
 					public void run() {
-						layout.chatContentDisplay.setText(layout.chatContentDisplay.getText() + "\n" + getFormattedMessage(message));
+						layout.chatContentDisplay.setText(layout.chatContentDisplay.getText() + "\n" + getFormattedMessage(message, false));
 					}
 
 				});
 			}
-			else if(messageList[0].equals(SomeNotice)) {
+			else if(messageList[0].equals(SOME_NOTICE)) {
 				
 			}
-			else if(messageList[0].equals(P2pNotice)) {
-				
+			else if(messageList[0].equals(P2P_NOTICE)) {
+				SwingUtilities.invokeLater(new Runnable() {
+
+					@Override
+					public void run() {
+						layout.chatContentDisplay.setText(layout.chatContentDisplay.getText() + "\n" + getFormattedMessage(message, true));
+					}
+
+				});
 			}
 			else {
 				
@@ -292,12 +299,15 @@ public class TextClientWindow implements SipMessageListener {
 		
 	}
 	
-	public String getFormattedMessage(String message) {
+	public String getFormattedMessage(String message, boolean isP2p) {
 		String[] list = message.split("&");
 		String s = "";
-		s += "[" + list[1] + "]: ";
+		s += "[" + list[1];
+		if(isP2p == true) {
+			s += "ÇÄÇÄµØ¶ÔÄãËµ";
+		}
 		//s += "[To " + list[0] + "] ";
-		s += list[2];
+		s += "]: " + list[2];
 		return s;
 	}
 	

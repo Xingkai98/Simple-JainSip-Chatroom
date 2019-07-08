@@ -13,10 +13,10 @@ public class Server implements SipMessageListener{
 	private static List<String> toSendList;
 	private static String grantPermission = "********";
 	private static String updateOnlineList = "&&&&&&&&";
-	private static String updateNotice = "UPD";
-	private static String AllNotice = "ALL";
-	private static String SomeNotice = "SOM";
-	private static String P2pNotice = "P2P";
+	private static String UPDATE_NOTICE = "UPD";
+	private static String ALL_NOTICE = "ALL";
+	private static String SOME_NOTICE = "SOM";
+	private static String P2P_NOTICE = "P2P";
 	
 	public Server() {
 		clientList = new ArrayList<String>();
@@ -59,10 +59,6 @@ public class Server implements SipMessageListener{
 		System.out.println("[Received message from " + sender + "]: " + message);
 		//System.out.println(senderSipAddress);
 		
-		//客户端向服务器发送：“作者地址&地址1&地址2&消息内容”
-		//服务器收到消息后立刻给这些地址转发消息内容。
-		//服务器向客户端转发：“消息类型（全体、私聊、部分）&消息作者&消息内容”
-		
 		//若为新登陆成员并且消息为grantPermission，则加入在线列表
 		boolean isNew = true;
 		for(int i=0;i<clientList.size();i++) {
@@ -74,7 +70,7 @@ public class Server implements SipMessageListener{
 		//若更新了在线列表，则对所有在线用户发消息更新在线列表
 		if(isNew) {
 			clientList.add(senderSipAddress);
-			String onlineListString = updateNotice + "&";
+			String onlineListString = UPDATE_NOTICE + "&";
 			int i=0;
 			while(i<clientList.size()-1) {
 				onlineListString += clientList.get(i) + "&";
@@ -84,19 +80,39 @@ public class Server implements SipMessageListener{
 			copyToAll(onlineListString);
 		}
 		
-		//若非新成员，则按照格式转发消息
+		//服务器收到客户端发来的消息list：“作者地址&地址1&地址2&消息内容”
+		//若未指定收件人，则消息为”作者地址&消息内容“
 		//服务器向客户端转发：“消息类型（全体、私聊、部分）&消息作者&消息内容”
-		//先默认为全体
 		else {
 			String[] list = message.split("&");
-			//若list长度为2，说明是群发 
-			String toSend = AllNotice + "&" + list[0] + "&" + list[list.length-1];
+			//若客户端发来的消息list长度为2（”作者地址&消息内容“），说明是群发
+			//服务器端转发格式为 ALL_NOTICE&作者地址&消息内容
+			//若客户端发来的消息list长度为3，说明是私发，因为只有一个收信人
+			String toSend = "";
 			if(list.length == 2) {
+				toSend = ALL_NOTICE + "&" + list[0] + "&" + list[list.length-1];
 				copyToAll(toSend);
 				return;
 			}
+			else if(list.length == 3) {
+				toSend = P2P_NOTICE + "&" + list[0] + "&" + list[list.length-1];
+				try {
+					sipLayer.sendMessage(list[1], toSend);
+				} catch (ParseException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (InvalidArgumentException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (SipException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				//copyToAll(toSend);
+				return;
+			}
 			else {
-				//客户端向服务器发送：“作者地址&地址1&地址2&消息内容”，所以目标地址在1到length-2的下标区间
+				//服务器接收到的消息为“作者地址&地址1&地址2&消息内容”，所以目标地址在1到length-2的下标区间
 				for(int i=1;i<list.length-1;i++) {
 					try {
 						sipLayer.sendMessage(list[i], toSend);
