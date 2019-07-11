@@ -1,5 +1,7 @@
 package cn.sse;
 import java.io.BufferedReader;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.text.ParseException;
 import java.util.*;
 
@@ -59,6 +61,7 @@ public class Server implements SipMessageListener{
 		System.out.println("[Received message from " + sender + "]: " + message);
 		//System.out.println(senderSipAddress);
 		
+		
 		//若为新登陆成员并且消息为grantPermission，则加入在线列表
 		boolean isNew = true;
 		for(int i=0;i<clientList.size();i++) {
@@ -112,7 +115,8 @@ public class Server implements SipMessageListener{
 				return;
 			}
 			else {
-				//服务器接收到的消息为“作者地址&地址1&地址2&消息内容”，所以目标地址在1到length-2的下标区间
+				toSend = SOME_NOTICE + "&" + list[0] + "&" + list[list.length-1];
+				//服务器接收到的消息为“作者地址&地址1&地址2...&消息内容”，所以目标地址在1到length-2的下标区间
 				for(int i=1;i<list.length-1;i++) {
 					try {
 						sipLayer.sendMessage(list[i], toSend);
@@ -143,12 +147,13 @@ public class Server implements SipMessageListener{
 		// TODO Auto-generated method stub
 		
 	}
-	public static void main(String[] args) {
+	public static void main(String[] args) throws Exception {
 		try {
 		    String username = "Server";
 		    String hostIP = "127.0.0.1";
 		    int port = 8080;   
-			sipLayer = new SipLayerFacade(username, hostIP, port);		
+			sipLayer = new SipLayerFacade(username, hostIP, port);	
+
         } catch (Throwable e) {
             System.out.println("Problem initializing the SIP stack.");
             e.printStackTrace();
@@ -156,6 +161,7 @@ public class Server implements SipMessageListener{
         }
 		Server server = new Server();
 		System.out.println("Server started.");
+		System.out.println("local ip: " + InetAddress.getLocalHost().getHostAddress());
 		
 		//添加监听
 		sipLayer.addSipMessageListener(server);

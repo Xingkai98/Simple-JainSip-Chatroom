@@ -5,6 +5,7 @@ import java.io.*;
 import java.text.ParseException;
 import java.util.*;
 import java.awt.BorderLayout;
+import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -25,20 +26,21 @@ class MyLayout extends JFrame {
 	// Name Panel
 	JLabel nameDisplay = new JLabel("您的名称为：");
 	JButton btnNameChange = new JButton("更改");
-	JPanel namePanel = new JPanel();
+		JPanel namePanel = new JPanel();
 
 	// Chat Panel
 	JTextArea chatContentDisplay = new JTextArea("");
-	JScrollPane chatContentScroll = new JScrollPane(chatContentDisplay);
+		JScrollPane chatContentScroll = new JScrollPane(chatContentDisplay);
 	JTextArea onlineListDisplay = new JTextArea("选择收信人（若不选则表示全体消息）：");
 	JButton btnReset = new JButton("重置");
-	JPanel onlineListPanel = new JPanel();
-	JPanel chatPanel = new JPanel();
+		JPanel onlineListPanel = new JPanel();
+		JScrollPane onlineListScroll;
+			JPanel chatPanel = new JPanel();
 
 	// Send Panel
 	JTextField sendContentDisplay = new JTextField("");
 	JButton btnSend = new JButton("发送");
-	JPanel sendPanel = new JPanel();
+		JPanel sendPanel = new JPanel();
 
 	MyLayout() {
 		init();
@@ -72,9 +74,11 @@ class MyLayout extends JFrame {
 			onlineListPanel.add(onlineListCheck.get(i));
 		}
 		onlineListPanel.add(btnReset);
+		onlineListScroll = new JScrollPane(onlineListPanel);
+		onlineListScroll.setPreferredSize(new Dimension(0,100));
 		
 		chatPanel.add(chatContentScroll, BorderLayout.CENTER);
-		chatPanel.add(onlineListPanel, BorderLayout.SOUTH);
+		chatPanel.add(onlineListScroll, BorderLayout.SOUTH);
 		this.add(chatPanel, BorderLayout.CENTER);
 
 		// Send Panel
@@ -268,7 +272,7 @@ public class TextClientWindow implements SipMessageListener {
 
 				});
 			}
-			else if(messageList[0].equals(ALL_NOTICE)) {
+			else if(messageList[0].equals(ALL_NOTICE) || messageList[0].equals(SOME_NOTICE)) {
 				SwingUtilities.invokeLater(new Runnable() {
 
 					@Override
@@ -277,9 +281,6 @@ public class TextClientWindow implements SipMessageListener {
 					}
 
 				});
-			}
-			else if(messageList[0].equals(SOME_NOTICE)) {
-				
 			}
 			else if(messageList[0].equals(P2P_NOTICE)) {
 				SwingUtilities.invokeLater(new Runnable() {
