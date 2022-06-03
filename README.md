@@ -1,5 +1,5 @@
-# Simple-JainSip-Chatroom
-A Simple chatroom based on Jain-Sip Java API.
+# Tiny Jain-Sip Chatroom
+A tiny chatroom based on Jain-Sip Java API.
 
 Usage：
 1. Start Server.java
